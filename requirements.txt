@@ -1,0 +1,13 @@
+# Web framework
+fastapi==0.115.13
+uvicorn[standard]==0.34.3
+sse-starlette==2.2.1
+
+# ML — match versions from training environment
+torch==2.8.0
+transformers==4.57.1
+peft==0.17.1
+accelerate==1.11.0
+safetensors==0.5.3
+huggingface-hub==0.34.0
+sentencepiece==0.2.0
