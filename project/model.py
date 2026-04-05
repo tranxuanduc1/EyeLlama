@@ -40,14 +40,13 @@ def is_loaded() -> bool:
     return _model is not None and _tokenizer is not None
 
 
-async def generate_stream(prompt: str) -> AsyncGenerator[str, None]:
+async def generate_stream(messages: list[dict]) -> AsyncGenerator[str, None]:
     if not is_loaded():
         raise RuntimeError("Model not loaded")
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": prompt},
-    ]
+    if not any(m["role"] == "system" for m in messages):
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}] + messages
+
     formatted = _tokenizer.apply_chat_template(
         messages,
         tokenize=False,

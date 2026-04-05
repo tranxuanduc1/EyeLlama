@@ -58,32 +58,48 @@ Returns the service status and whether the model has been loaded.
 
 ### `POST /generate/`
 
-Streams a response for a given prompt using Server-Sent Events (SSE).
+Streams a response for a conversation using Server-Sent Events (SSE). Accepts the full message history, enabling multi-turn conversations.
 
 **Request body**
 
 ```json
 {
-  "prompt": "What are the symptoms of glaucoma?"
+  "messages": [
+    {"role": "user", "content": "What are the symptoms of glaucoma?"}
+  ]
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `prompt` | string | yes | The user question or message |
+For multi-turn conversations, include the full history:
+
+```json
+{
+  "messages": [
+    {"role": "user", "content": "What is glaucoma?"},
+    {"role": "assistant", "content": "Glaucoma is a group of eye conditions..."},
+    {"role": "user", "content": "How is it treated?"}
+  ]
+}
+```
+
+**Message roles**
+
+| Role | Description |
+|---|---|
+| `user` | A message from the user |
+| `assistant` | A previous response from the model |
+| `system` | Optional system prompt override. If omitted, the default medical assistant prompt is injected automatically. |
 
 **Response**
 
-The endpoint returns a text/event-stream. Each SSE `data` field contains one decoded token. The final event is `[DONE]`.
+The endpoint returns a `text/event-stream`. Each SSE `data` field contains a JSON object with a `delta` key holding one decoded token. The final event is `[DONE]`.
 
 ```
-data: Glaucoma
+data: {"delta": "Glaucoma"}
 
-data:  is
+data: {"delta": " is"}
 
-data:  characterized
-
-data:  by
+data: {"delta": " characterized"}
 
 ...
 
@@ -101,22 +117,23 @@ data: [DONE]
 ```bash
 curl -N -X POST http://localhost:8000/generate/ \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "What are the symptoms of glaucoma?"}'
+  -d '{"messages": [{"role": "user", "content": "What are the symptoms of glaucoma?"}]}'
 ```
 
 **Example — Python (httpx)**
 
 ```python
 import httpx
+import json
 
 with httpx.stream("POST", "http://localhost:8000/generate/",
-                  json={"prompt": "What are the symptoms of glaucoma?"}) as r:
+                  json={"messages": [{"role": "user", "content": "What are the symptoms of glaucoma?"}]}) as r:
     for line in r.iter_lines():
         if line.startswith("data: "):
-            token = line[6:]
-            if token == "[DONE]":
+            payload = line[6:]
+            if payload == "[DONE]":
                 break
-            print(token, end="", flush=True)
+            print(json.loads(payload)["delta"], end="", flush=True)
 ```
 
 ## Generation parameters
@@ -128,7 +145,7 @@ with httpx.stream("POST", "http://localhost:8000/generate/",
 | `top_p` | 0.95 |
 | `do_sample` | true |
 
-The system prompt injected into every request is:
+The default system prompt injected when no `system` message is provided:
 > *"You are a medical assistant specialized in eye diseases."*
 
 ## Interactive docs
