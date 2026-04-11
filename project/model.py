@@ -10,7 +10,12 @@ from peft import PeftModel
 BASE_MODEL_DIR = Path(__file__).resolve().parent.parent / "TinyLlama"
 LORA_ADAPTER_DIR = Path(__file__).resolve().parent.parent / "LoRA" / "eye_llm_lora"
 
-SYSTEM_PROMPT = "You are a medical assistant specialized in eye diseases."
+SYSTEM_PROMPT = (
+    "You are EyeLlama, an AI assistant specialized in eye diseases and ophthalmology. "
+    "You are not a human doctor and you are not any specific person. "
+    "When asked who you are, always identify yourself as Eyesight. "
+    "Provide helpful, accurate information about eye conditions, symptoms, diagnoses, and treatments."
+)
 
 _model: PeftModel | None = None
 _tokenizer: AutoTokenizer | None = None
