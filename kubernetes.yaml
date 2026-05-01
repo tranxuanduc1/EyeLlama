@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eyellama-model-service
+  labels:
+    app: eyellama-model-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eyellama-model-service
+  template:
+    metadata:
+      labels:
+        app: eyellama-model-service
+    spec:
+      containers:
+        - name: eyellama-model-service
+          image: xuanduck/eyellama-model-service:1.0.0
+          ports:
+            - containerPort: 8003
+          readinessProbe:
+            httpGet:
+              path: /health/
+              port: 8003
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health/
+              port: 8003
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eyellama-model-service
+spec:
+  type: ClusterIP
+  selector:
+    app: eyellama-model-service
+  ports:
+    - port: 80
+      targetPort: 8003
